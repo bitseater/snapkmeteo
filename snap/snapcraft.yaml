@@ -1,0 +1,98 @@
+# Snapcraft definition for KMeteo
+name: kmeteo
+version: '0.1.1'
+title: KMeteo
+summary: Desktop weather forecasts, current conditions, and maps
+description: |
+  KMeteo provides current weather conditions and hourly and daily forecasts.
+  It includes temperature, pressure, wind speed and direction, sunrise and
+  sunset times, plus weather maps.
+icon: snap/gui/kmeteo.svg
+contact: https://gitlab.com/bitseater/kmeteo
+license: GPL-3.0-or-later
+issues: https://gitlab.com/bitseater/kmeteo/-/issues
+source-code: https://gitlab.com/bitseater/kmeteo
+website: https://gitlab.com/bitseater/kmeteo
+grade: stable
+base: core24
+confinement: strict
+
+platforms:
+  amd64:
+  arm64:
+
+slots:
+  dbus-meteo:
+    interface: dbus
+    bus: session
+    name: io.gitlab.bitseater.kmeteo
+
+layout:
+  /usr/share/icons:
+    bind: $SNAP/usr/share/icons
+
+apps:
+  kmeteo:
+    command: usr/bin/io.gitlab.bitseater.kmeteo
+    extensions: [gnome]
+    # Environment variables for Qt, XDG and locale handling
+    environment:
+      GSETTINGS_BACKEND: keyfile
+      XDG_CONFIG_HOME: $SNAP_USER_DATA/.config
+      PYTHONPATH: $SNAP/usr/share/io.gitlab.bitseater.kmeteo:$SNAP/usr/lib/python3/dist-packages:$SNAP/usr/local/lib/python3.12/dist-packages:${PYTHONPATH}
+      XDG_DATA_DIRS: $SNAP/usr/share:$SNAP/share:$XDG_DATA_DIRS
+      LD_LIBRARY_PATH: $SNAP/webkitgtk-platform/usr/lib:$SNAP/webkitgtk-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:$LD_LIBRARY_PATH
+      GI_TYPELIB_PATH: $SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0:$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/gjs/girepository-1.0
+      QT_PLUGIN_PATH: $SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/qt6/plugins
+      QTWEBENGINEPROCESS_PATH: $SNAP/usr/lib/qt6/libexec/QtWebEngineProcess
+      QTWEBENGINE_RESOURCES_PATH: $SNAP/usr/share/qt6/resources
+      QTWEBENGINE_LOCALES_PATH: $SNAP/usr/share/qt6/translations/qtwebengine_locales
+      QTWEBENGINE_DISABLE_SANDBOX: "1"
+    common-id: io.gitlab.bitseater.kmeteo
+    slots: [dbus-meteo]
+    plugs:
+      - desktop
+      - desktop-legacy
+      - browser-support
+      - gsettings
+      - locale-control
+      - network
+      - network-status
+      - audio-playback
+      - opengl
+      - wayland
+      - x11
+      - unity7
+      - home
+    desktop: usr/share/applications/io.gitlab.bitseater.kmeteo.desktop
+
+parts:
+  kmeteo-app:
+    source: https://gitlab.com/bitseater/kmeteo.git
+    source-tag: '0.1.1'
+    plugin: meson
+    meson-parameters: [--prefix=/usr]
+    build-environment:
+      - PATH: /usr/bin${PATH:+:$PATH}
+    override-prime: |
+      craftctl default
+      if [ -d "$CRAFT_PRIME/usr/share/icons/hicolor" ]; then
+        gtk-update-icon-cache --force --ignore-theme-index "$CRAFT_PRIME/usr/share/icons/hicolor"
+      fi
+    build-packages:
+      - gettext
+      - appstream
+      - desktop-file-utils
+      - meson
+      - python3
+      - python3-pyqt6
+      - python3-pyqt6.qtwebengine
+      - python3-requests
+    stage-packages:
+      - python3
+      - python3-pyqt6
+      - python3-pyqt6.qtwebengine
+      - python3-requests
+      - hicolor-icon-theme
+      - adwaita-icon-theme
+      - qt6-wayland
